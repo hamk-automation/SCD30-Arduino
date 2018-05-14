@@ -25,16 +25,17 @@
  *
  */
 
-
+/*
 #if ARDUINO >= 100
  #include "Arduino.h"
 #else
  #include "WProgram.h"
 #endif
+*/
 
 #include "SCD30.h"
 
-//#define I2C_DEBUG
+#define I2C_DEBUG
 
 /**************************************************************************/
 /*! 
@@ -75,7 +76,7 @@ boolean SCD30::begin(TwoWire *theWire) {
 
 
 boolean SCD30::readWordFromCommand(uint8_t command[], uint8_t commandLength, 
-                                  uint16_t delayms, uint16_t *readdata, uint8_t readlen)
+                                  uint16_t delayms = 0, uint16_t *readdata, uint8_t readlen)
 {
   uint8_t data;
 
@@ -150,4 +151,25 @@ uint8_t SCD30::generateCRC(uint8_t *data, uint8_t datalen) {
     }
   }
   return crc;
+}
+
+boolean SCD30::readMeasurement() {
+  // TODO: add dataready check
+  // TOREMEMBER: readWordFromCommand already handled byteswap at word level. Only apply wordswap for conv. 
+  uint8_t command[2] = {0x03, 0x00};
+  uint16_t resp16[6];
+  if (readWordFromCommand(command, sizeof(command), 0, (uint16_t*)resp16, 6)) {
+    uint16_t tempArray[] = {resp16[3], resp16[2]}; 
+    uint16_t rhArray[] = {resp16[5], resp16[4]};
+    uint16_t co2Array[] = {resp16[1], resp16[0]};
+    float *t, *rh, *co2;
+    t = (float*)tempArray;
+    rh = (float*)rhArray;
+    co2 = (float*)co2Array;
+    fTemp = *t;
+    fRH = *rh;
+    fCO2 = *co2;
+    return true;
+  }
+  else return false;
 }
