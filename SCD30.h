@@ -1,4 +1,4 @@
-/*!
+/*
 
 */
 
@@ -21,17 +21,18 @@ class SCD30 {
   SCD30();
   boolean begin(TwoWire *theWire = NULL);
   float fTemp, fRH, fCO2;
+  boolean bReady;
 
-  boolean trigSingleMeasurement(uint16_t ambientPressure = 0);
-  boolean trigContinuousMeasurement(uint16_t ambientPressure = 0);
+  boolean trigSingleMeasurement(uint16_t ambientPressure);
+  boolean trigContinuousMeasurement(uint16_t ambientPressure);
   boolean stopContinuousMeasurement();
-  boolean setMeasurementInterval(uint16_t uInterval = 2);
+  boolean setMeasurementInterval(uint16_t uInterval);
   boolean getDataReadyStatus();
   boolean readMeasurement();
   boolean setTemperatureOffset(uint16_t tempOffset);
   boolean setAltitudeOffset(uint16_t altitude);
 
-  boolean setASC(boolean enable = true);
+  boolean setASC(boolean enable);
   boolean setFRCValue(uint16_t co2baseline);
 
  private:
@@ -40,6 +41,6 @@ class SCD30 {
 
   void write(uint8_t address, uint8_t *data, uint8_t n);
   void read(uint8_t address, uint8_t *data, uint8_t n);
-  boolean readWordFromCommand(uint8_t command[], uint8_t commandLength, uint16_t delay, uint16_t *readdata = NULL, uint8_t readlen = 0);
+  boolean readWordFromCommand(uint8_t command[], uint8_t commandLength, uint16_t delayms = 0, uint16_t *readdata = NULL, uint8_t readlen = 0);
   uint8_t generateCRC(uint8_t data[], uint8_t datalen);
 };

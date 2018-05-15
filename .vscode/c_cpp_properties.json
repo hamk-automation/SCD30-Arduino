@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\esp8266com",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\esp8266com\\esp8266\\cores\\esp8266"
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": false,
+                "path": [
+                    "${workspaceFolder}",
+                    "C:\\Program Files (x86)\\Arduino\\hardware\\esp8266com",
+                    "C:\\Program Files (x86)\\Arduino\\hardware\\esp8266com\\esp8266\\cores\\esp8266"
+                ]
+            },
+            "intelliSenseMode": "msvc-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
