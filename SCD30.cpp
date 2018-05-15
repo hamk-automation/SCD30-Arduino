@@ -50,8 +50,9 @@ boolean SCD30::begin(TwoWire *theWire) {
 /**************************************************************************/
 
 boolean SCD30::readWordFromCommand(uint8_t command[], uint8_t commandLength,
-                                   uint16_t delayms = 0, uint16_t *readdata = nullptr,
-                                   uint8_t readlen = 0) {
+                                   uint16_t delayms,
+                                   uint16_t *readdata,
+                                   uint8_t readlen) {
   uint8_t data;
 
   _i2c->beginTransmission(_i2caddr);
@@ -73,10 +74,12 @@ boolean SCD30::readWordFromCommand(uint8_t command[], uint8_t commandLength,
 #endif
   _i2c->endTransmission();
 
-  if (readlen == 0 || readdata == nullptr) return true;
+  if (readlen == 0 || readdata == nullptr)
+    return true;
 
   uint8_t replylen = readlen * (SCD30_WORD_LEN + 1);
-  if (_i2c->requestFrom(_i2caddr, replylen) != replylen) return false;
+  if (_i2c->requestFrom(_i2caddr, replylen) != replylen)
+    return false;
   uint8_t replybuffer[replylen];
 #ifdef I2C_DEBUG
   Serial.print("\t\t<- ");
@@ -102,7 +105,8 @@ boolean SCD30::readWordFromCommand(uint8_t command[], uint8_t commandLength,
     Serial.print(" vs. 0x");
     Serial.println(replybuffer[i * 3 + 2], HEX);
 #endif
-    if (crc != replybuffer[i * 3 + 2]) return false;
+    if (crc != replybuffer[i * 3 + 2])
+      return false;
     // success! store it
     readdata[i] = replybuffer[i * 3];
     readdata[i] <<= 8;
@@ -153,44 +157,80 @@ boolean SCD30::readMeasurement() {
     return false;
 }
 
-boolean trigSingleMeasurement(uint16_t ambientPressure = 0) {
-  
+boolean SCD30::trigSingleMeasurement(uint16_t ambientPressure) {
   uint8_t command[5];
-  command[0] = 0; command[1] = 0x06;
-    if (ambientPressure < 700 || ambientPressure > 1200) {
+  command[0] = 0;
+  command[1] = 0x06;
+  if (ambientPressure < 700 || ambientPressure > 1200) {
     ambientPressure = 0;
   }
   command[2] = (ambientPressure >> 8) & 0xFF;
   command[3] = ambientPressure & 0xFF;
-  command[4] = generateCRC(&ambientPressure, sizeof(ambientPressure));
+  command[4] = generateCRC(&command[2], SCD30_WORD_LEN);
   _i2c->beginTransmission(_i2caddr);
-  _i2c->write(command, sizeof(command));
+  if (_i2c->write(command, sizeof(command)) != sizeof(command))
+    return false;
   _i2c->endTransmission();
   return true;
 }
 
-boolean trigContinuousMeasurement(uint16_t ambientPressure = 0) {
-  ;
-}
-boolean stopContinuousMeasurement() {
-  ;
-}
-boolean setMeasurementInterval(uint16_t uInterval = 2) {
-  ;
-}
-boolean getDataReadyStatus() {
-  ;
-}
-boolean setTemperatureOffset(uint16_t tempOffset) {
-  ;
-}
-boolean setAltitudeOffset(uint16_t altitude) {
-  ;
+boolean SCD30::trigContinuousMeasurement(uint16_t ambientPressure) {
+  uint8_t command[5];
+  command[0] = 0;
+  command[1] = 0x10;
+  if (ambientPressure < 700 || ambientPressure > 1200) {
+    ambientPressure = 0;
+  }
+  command[2] = (ambientPressure >> 8) & 0xFF;
+  command[3] = ambientPressure & 0xFF;
+  command[4] = generateCRC(&command[2], SCD30_WORD_LEN);
+  _i2c->beginTransmission(_i2caddr);
+  if (_i2c->write(command, sizeof(command)) != sizeof(command))
+    return false;
+  _i2c->endTransmission();
+  return true;
 }
 
-boolean setASC(boolean enable = true) {
-  ;
+boolean SCD30::stopContinuousMeasurement() {
+  uint8_t command[2];
+  command[0] = 0;
+  command[1] = 0x06;
+  _i2c->beginTransmission(_i2caddr);
+  if (_i2c->write(command, sizeof(command)) != sizeof(command))
+    return false;
+  _i2c->endTransmission();
+  return true;
 }
-boolean setFRCValue(uint16_t co2baseline) {
-  ;
+
+boolean SCD30::setMeasurementInterval(uint16_t uInterval) {
+  uint8_t command[5];
+  command[0] = 0x46;
+  command[1] = 0x00;
+  if (uInterval < 2 || uInterval > 1200) {
+    uInterval = 2;
+  }
+  command[2] = (uInterval >> 8) & 0xFF;
+  command[3] = uInterval & 0xFF;
+  command[4] = generateCRC(&command[2], SCD30_WORD_LEN);
+  _i2c->beginTransmission(_i2caddr);
+  if (_i2c->write(command, sizeof(command)) != sizeof(command))
+    return false;
+  _i2c->endTransmission();
+  return true;
 }
+
+boolean SCD30::getDataReadyStatus() {
+  uint8_t command[2] = {0x02, 0x02};
+  uint16_t resp16[1];
+  if (readWordFromCommand(command, sizeof(command), 0, (uint16_t *)resp16, 1)) {
+    bReady = (resp16[0] == 1);
+    return true;
+  } else
+    return false;
+}
+
+boolean SCD30::setTemperatureOffset(uint16_t tempOffset) { ; }
+boolean SCD30::setAltitudeOffset(uint16_t altitude) { ; }
+
+boolean SCD30::setASC(boolean enable) { ; }
+boolean SCD30::setFRCValue(uint16_t co2baseline) { ; }
