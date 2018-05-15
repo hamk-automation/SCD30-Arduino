@@ -43,4 +43,5 @@ class SCD30 {
   void read(uint8_t address, uint8_t *data, uint8_t n);
   boolean readWordFromCommand(uint8_t command[], uint8_t commandLength, uint16_t delayms = 0, uint16_t *readdata = NULL, uint8_t readlen = 0);
   uint8_t generateCRC(uint8_t data[], uint8_t datalen);
+  boolean setParamByCommand(uint8_t command[], uint16_t param, uint8_t param_length = 1);
 };
