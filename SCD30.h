@@ -6,16 +6,21 @@
 #include <Wire.h>
 
 // the i2c address
-#define SCD30_I2CADDR_DEFAULT 0x61     ///< SGP30 has only one I2C address
+#define SCD30_I2CADDR_DEFAULT 0x61     ///< SCD30 has only one I2C address
 
 // commands and constants
-#define SCD30_CRC8_POLYNOMIAL  0x31    ///< Seed for SGP30's CRC polynomial
+#define SCD30_CRC8_POLYNOMIAL  0x31    ///< Seed for Scd30's CRC polynomial
 #define SCD30_CRC8_INIT        0xFF    ///< Init value for CRC
 #define SCD30_WORD_LEN         2       ///< 2 bytes per word
 
-/**************************************************************************/
-/*!  Class that stores state and functions for interacting with SGP30 Gas Sensor */
-/**************************************************************************/
+/**
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * */
 class SCD30 {
  public:
   SCD30();
@@ -23,16 +28,16 @@ class SCD30 {
   float fTemp, fRH, fCO2;
   boolean bReady;
 
-  boolean trigSingleMeasurement(uint16_t ambientPressure);
-  boolean trigContinuousMeasurement(uint16_t ambientPressure);
+  boolean trigSingleMeasurement(uint16_t ambientPressure = 0);
+  boolean trigContinuousMeasurement(uint16_t ambientPressure = 0);
   boolean stopContinuousMeasurement();
-  boolean setMeasurementInterval(uint16_t uInterval);
+  boolean setMeasurementInterval(uint16_t uInterval = 2);
   boolean getDataReadyStatus();
   boolean readMeasurement();
   boolean setTemperatureOffset(uint16_t tempOffset);
   boolean setAltitudeOffset(uint16_t altitude);
 
-  boolean setASC(boolean enable);
+  boolean setASC(boolean enable = true);
   boolean setFRCValue(uint16_t co2baseline);
 
  private:
