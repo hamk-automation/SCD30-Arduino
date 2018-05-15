@@ -1,2 +1,6 @@
 {
+    "files.associations": {
+        "*.CI": "vb",
+        "random": "cpp"
+    }
 }

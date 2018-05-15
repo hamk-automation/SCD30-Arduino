@@ -13,7 +13,7 @@
 
 #include "SCD30.h"
 
-#define I2C_DEBUG
+//#define I2C_DEBUG
 
 /**************************************************************************/
 /*!
@@ -50,8 +50,7 @@ boolean SCD30::begin(TwoWire *theWire) {
 /**************************************************************************/
 
 boolean SCD30::readWordFromCommand(uint8_t command[], uint8_t commandLength,
-                                   uint16_t delayms,
-                                   uint16_t *readdata,
+                                   uint16_t delayms, uint16_t *readdata,
                                    uint8_t readlen) {
   uint8_t data;
 
@@ -119,6 +118,13 @@ boolean SCD30::readWordFromCommand(uint8_t command[], uint8_t commandLength,
   return true;
 }
 
+/**
+ * @brief
+ *
+ * @param data
+ * @param datalen
+ * @return uint8_t
+ */
 uint8_t SCD30::generateCRC(uint8_t *data, uint8_t datalen) {
   // calculates 8-Bit checksum with given polynomial
   uint8_t crc = SCD30_CRC8_INIT;
@@ -135,6 +141,11 @@ uint8_t SCD30::generateCRC(uint8_t *data, uint8_t datalen) {
   return crc;
 }
 
+/**
+ * @brief
+ *
+ * @return boolean
+ */
 boolean SCD30::readMeasurement() {
   // TODO: add dataready check
   // TOREMEMBER: readWordFromCommand already handled byteswap at word level.
@@ -157,68 +168,63 @@ boolean SCD30::readMeasurement() {
     return false;
 }
 
+/**
+ * @brief
+ *
+ * @param ambientPressure
+ * @return boolean
+ */
 boolean SCD30::trigSingleMeasurement(uint16_t ambientPressure) {
-  uint8_t command[5];
-  command[0] = 0;
-  command[1] = 0x06;
+  uint8_t command[2] = {0x00, 0x06};
   if (ambientPressure < 700 || ambientPressure > 1200) {
     ambientPressure = 0;
   }
-  command[2] = (ambientPressure >> 8) & 0xFF;
-  command[3] = ambientPressure & 0xFF;
-  command[4] = generateCRC(&command[2], SCD30_WORD_LEN);
-  _i2c->beginTransmission(_i2caddr);
-  if (_i2c->write(command, sizeof(command)) != sizeof(command))
-    return false;
-  _i2c->endTransmission();
-  return true;
+  return setParamByCommand(command, ambientPressure);
 }
 
+/**
+ * @brief
+ *
+ * @param ambientPressure
+ * @return boolean
+ */
 boolean SCD30::trigContinuousMeasurement(uint16_t ambientPressure) {
-  uint8_t command[5];
-  command[0] = 0;
-  command[1] = 0x10;
+  uint8_t command[2] = {0x00, 0x10};
   if (ambientPressure < 700 || ambientPressure > 1200) {
     ambientPressure = 0;
   }
-  command[2] = (ambientPressure >> 8) & 0xFF;
-  command[3] = ambientPressure & 0xFF;
-  command[4] = generateCRC(&command[2], SCD30_WORD_LEN);
-  _i2c->beginTransmission(_i2caddr);
-  if (_i2c->write(command, sizeof(command)) != sizeof(command))
-    return false;
-  _i2c->endTransmission();
-  return true;
+  return setParamByCommand(command, ambientPressure);
 }
 
+/**
+ * @brief
+ *
+ * @return boolean
+ */
 boolean SCD30::stopContinuousMeasurement() {
-  uint8_t command[2];
-  command[0] = 0;
-  command[1] = 0x06;
-  _i2c->beginTransmission(_i2caddr);
-  if (_i2c->write(command, sizeof(command)) != sizeof(command))
-    return false;
-  _i2c->endTransmission();
-  return true;
+  uint8_t command[2] = {0x00, 0x06};
+  return setParamByCommand(command, 0, 0);
 }
 
+/**
+ * @brief
+ *
+ * @param uInterval
+ * @return boolean
+ */
 boolean SCD30::setMeasurementInterval(uint16_t uInterval) {
-  uint8_t command[5];
-  command[0] = 0x46;
-  command[1] = 0x00;
+  uint8_t command[2] = {0x46, 0x00};
   if (uInterval < 2 || uInterval > 1200) {
     uInterval = 2;
   }
-  command[2] = (uInterval >> 8) & 0xFF;
-  command[3] = uInterval & 0xFF;
-  command[4] = generateCRC(&command[2], SCD30_WORD_LEN);
-  _i2c->beginTransmission(_i2caddr);
-  if (_i2c->write(command, sizeof(command)) != sizeof(command))
-    return false;
-  _i2c->endTransmission();
-  return true;
+  return setParamByCommand(command, uInterval);
 }
 
+/**
+ * @brief
+ *
+ * @return boolean
+ */
 boolean SCD30::getDataReadyStatus() {
   uint8_t command[2] = {0x02, 0x02};
   uint16_t resp16[1];
@@ -229,8 +235,82 @@ boolean SCD30::getDataReadyStatus() {
     return false;
 }
 
-boolean SCD30::setTemperatureOffset(uint16_t tempOffset) { ; }
-boolean SCD30::setAltitudeOffset(uint16_t altitude) { ; }
+/**
+ * @brief
+ *
+ * @param tempOffset
+ * @return boolean
+ */
+boolean SCD30::setTemperatureOffset(uint16_t tempOffset) {
+  uint8_t command[2] = {0x54, 0x03};
+  return setParamByCommand(command, tempOffset);
+}
 
-boolean SCD30::setASC(boolean enable) { ; }
-boolean SCD30::setFRCValue(uint16_t co2baseline) { ; }
+/**
+ * @brief
+ *
+ * @param altitude
+ * @return boolean
+ */
+boolean SCD30::setAltitudeOffset(uint16_t altitude) {
+  uint8_t command[2] = {0x51, 0x02};
+  return setParamByCommand(command, altitude);
+}
+
+/**
+ * @brief
+ *
+ * @param enable
+ * @return boolean
+ */
+boolean SCD30::setASC(boolean enable) {
+  uint8_t command[2] = {0x53, 0x06};
+  uint16_t enableCmd = enable == true ? 1 : 0;
+  return setParamByCommand(command, enableCmd);
+}
+
+/**
+ * @brief
+ *
+ * @param co2baseline
+ * @return boolean
+ */
+boolean SCD30::setFRCValue(uint16_t co2baseline) {
+  uint8_t command[2] = {0x52, 0x04};
+
+  if (co2baseline < 400 || co2baseline > 2000) {
+    return false;
+  }
+  return setParamByCommand(command, co2baseline);
+}
+
+/**
+ * @brief
+ *
+ * @param command
+ * @param param
+ * @param param_length
+ * @return boolean
+ */
+boolean SCD30::setParamByCommand(uint8_t command[], uint16_t param,
+                                 uint8_t param_length) {
+  uint8_t __command[5];
+  __command[0] = command[0];
+  __command[1] = command[1];
+  if (param_length == 0) {
+    _i2c->beginTransmission(_i2caddr);
+    if (_i2c->write(__command, SCD30_WORD_LEN) != SCD30_WORD_LEN)
+      return false;
+    _i2c->endTransmission();
+    return true;
+  } else {
+    __command[2] = (param >> 8) & 0xFF;
+    __command[3] = param & 0xFF;
+    __command[4] = generateCRC(&__command[2], SCD30_WORD_LEN);
+    _i2c->beginTransmission(_i2caddr);
+    if (_i2c->write(__command, sizeof(__command)) != sizeof(__command))
+      return false;
+    _i2c->endTransmission();
+    return true;
+  }
+}
