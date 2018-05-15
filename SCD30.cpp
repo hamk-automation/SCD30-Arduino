@@ -154,7 +154,7 @@ boolean SCD30::readMeasurement() {
 }
 
 boolean trigSingleMeasurement(uint16_t ambientPressure = 0) {
-   _i2c->beginTransmission(_i2caddr);
+  
   uint8_t command[5];
   command[0] = 0; command[1] = 0x06;
     if (ambientPressure < 700 || ambientPressure > 1200) {
@@ -163,8 +163,9 @@ boolean trigSingleMeasurement(uint16_t ambientPressure = 0) {
   command[2] = (ambientPressure >> 8) & 0xFF;
   command[3] = ambientPressure & 0xFF;
   command[4] = generateCRC(&ambientPressure, sizeof(ambientPressure));
-  _i2c->write(SCD30_I2CADDR_DEFAULT, command, sizeof(command));
-   _i2c->endTransmission();
+  _i2c->beginTransmission(_i2caddr);
+  _i2c->write(command, sizeof(command));
+  _i2c->endTransmission();
   return true;
 }
 
